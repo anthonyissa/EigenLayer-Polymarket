@@ -11,6 +11,7 @@ import {IERC1271Upgradeable} from "@openzeppelin-upgrades/contracts/interfaces/I
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {OwnableUpgradeable} from "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 
 struct Bet {
         string name;
@@ -24,7 +25,7 @@ struct Bet {
 
     }
 
-contract HelloWorldServiceManager is  ECDSAServiceManagerBase {
+contract HelloWorldServiceManagerWithoutEigen is OwnableUpgradeable {
     using ECDSAUpgradeable for bytes32;
 
     uint public latestBetNum;
@@ -33,29 +34,6 @@ contract HelloWorldServiceManager is  ECDSAServiceManagerBase {
 
     event NewBetCreated(uint betNum, Bet bet);
     event BetEnded(uint betNum);
-
-    modifier onlyOperator() {
-        require(
-            ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender),
-            "Operator must be the caller"
-        );
-        _;
-    }
-
-    constructor(
-        address _avsDirectory,
-        address _stakeRegistry,
-        address _rewardsCoordinator,
-        address _delegationManager
-
-    )
-        ECDSAServiceManagerBase(
-            _avsDirectory,
-            _stakeRegistry,
-            _rewardsCoordinator,
-            _delegationManager
-        )
-    {}
 
     function createNewBet(string memory name, uint endTimestamp) public onlyOwner() {
         latestBetNum++;
@@ -103,7 +81,7 @@ contract HelloWorldServiceManager is  ECDSAServiceManagerBase {
         }
     }
 
-    function respondToBet(uint betNum, bool yes) public onlyOperator() {
+    function respondToBet(uint betNum, bool yes) public {
         require(allBets[betNum].ended == false, "Bet has already ended");
         require(allBets[betNum].endTimestamp < block.timestamp, "Bet has not ended yet");
         allBets[betNum].ended = true;
